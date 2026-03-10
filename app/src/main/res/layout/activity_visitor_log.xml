@@ -75,12 +75,27 @@
                 android:hint="Purpose of Visit" android:textColor="#FFFFFF" android:textColorHint="#7B7B9D"
                 android:paddingHorizontal="12dp" android:textSize="14sp" android:layout_marginBottom="12dp" />
 
-            <Button android:id="@+id/btnRegisterVisitor"
-                android:layout_width="match_parent" android:layout_height="48dp"
-                android:background="@drawable/bg_button_violet"
-                android:text="REGISTER VISITOR"
-                android:textColor="#FFFFFF" android:textStyle="bold"
-                android:stateListAnimator="@null" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="10">
+
+                <Button android:id="@+id/btnCaptureFace"
+                    android:layout_width="0dp" android:layout_height="48dp"
+                    android:layout_weight="3" android:layout_marginEnd="8dp"
+                    android:backgroundTint="#22223B"
+                    android:text="📷 FACE"
+                    android:textColor="#FFFFFF" />
+
+                <Button android:id="@+id/btnRegisterVisitor"
+                    android:layout_width="0dp" android:layout_height="48dp"
+                    android:layout_weight="7"
+                    android:background="@drawable/bg_button_violet"
+                    android:text="REGISTER VISITOR"
+                    android:textColor="#FFFFFF" android:textStyle="bold"
+                    android:stateListAnimator="@null" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Past Visitors List -->

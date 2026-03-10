@@ -60,7 +60,7 @@ public class RoomDetailsFragment extends Fragment {
         db.collection("users").document(auth.getCurrentUser().getUid())
                 .get()
                 .addOnSuccessListener(doc -> {
-                    String room = doc.getString("roomNumber");
+                    String room = doc.getString("room");
                     String floor = doc.getString("floor");
                     String wing = doc.getString("wing");
                     tvRoomNumber.setText("Room No: " + (room != null ? room : "Not Assigned"));

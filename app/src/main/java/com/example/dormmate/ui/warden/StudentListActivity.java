@@ -247,6 +247,121 @@ public class StudentListActivity extends AppCompatActivity {
         });
     }
 
+    private void showStudentOptionsDialog(DocumentSnapshot doc) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_student_options, null);
+        TextView tvStudentNameDialogMsg = dialogView.findViewById(R.id.tvStudentNameDialogMsg);
+        Button btnAllocateRoom = dialogView.findViewById(R.id.btnOptionAllocateRoom);
+        Button btnUpdateDetails = dialogView.findViewById(R.id.btnOptionUpdateDetails);
+
+        tvStudentNameDialogMsg.setText("Actions for " + doc.getString("name"));
+
+        AlertDialog optionsDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (optionsDialog.getWindow() != null) {
+            optionsDialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        btnAllocateRoom.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                optionsDialog.dismiss();
+                showAllocateRoomDialog(doc);
+            }
+        });
+
+        btnUpdateDetails.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                optionsDialog.dismiss();
+                Toast.makeText(StudentListActivity.this, "Update Details functionality pending", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+
+        optionsDialog.show();
+    }
+
+    private void showAllocateRoomDialog(DocumentSnapshot doc) {
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_allocate_room, null);
+        EditText etAllocateRoom = dialogView.findViewById(R.id.etAllocateRoom);
+        Button btnCancelAllocation = dialogView.findViewById(R.id.btnCancelAllocation);
+        Button btnSaveAllocation = dialogView.findViewById(R.id.btnSaveAllocation);
+
+        // Pre-fill if exists
+        etAllocateRoom.setText(doc.getString("room") != null ? doc.getString("room") : "");
+
+        AlertDialog allocateDialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .create();
+
+        if (allocateDialog.getWindow() != null) {
+            allocateDialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+        }
+
+        btnCancelAllocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                allocateDialog.dismiss();
+            }
+        });
+
+        btnSaveAllocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String roomStr = etAllocateRoom.getText().toString().trim();
+                String floor = "";
+                String wing = "";
+
+                try {
+                    int roomNum = Integer.parseInt(roomStr);
+                    floor = String.valueOf(roomNum / 100);
+                    wing = String.valueOf(roomNum % 100);
+                } catch (NumberFormatException e) {
+                    Toast.makeText(StudentListActivity.this, "Room must be a number for auto-allocation",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                boolean isInvitation = doc.getReference().getPath().contains("pre_approved_students");
+
+                if (isInvitation) {
+                    Toast.makeText(StudentListActivity.this,
+                            "Cannot allocate rooms to pending invitations. Wait for student to activate account first.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                Map<String, Object> updates = new HashMap<>();
+                updates.put("room", roomStr);
+                updates.put("floor", floor);
+                updates.put("wing", wing);
+
+                doc.getReference().update(updates)
+                        .addOnSuccessListener(new com.google.android.gms.tasks.OnSuccessListener<Void>() {
+                            @Override
+                            public void onSuccess(Void aVoid) {
+                                allocateDialog.dismiss();
+                                Toast.makeText(StudentListActivity.this, "Room Details Updated", Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        })
+                        .addOnFailureListener(new com.google.android.gms.tasks.OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(StudentListActivity.this, "Failed to update room: " + e.getMessage(),
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        });
+            }
+        });
+
+        allocateDialog.show();
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -275,6 +390,13 @@ public class StudentListActivity extends AppCompatActivity {
             holder.tvName.setText(name + (isInvitation ? " (Invitation)" : ""));
             holder.tvEmail.setText(email);
             holder.tvAvatar.setText(!name.isEmpty() ? String.valueOf(name.charAt(0)).toUpperCase() : "?");
+
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    showStudentOptionsDialog(doc);
+                }
+            });
         }
 
         @Override

@@ -80,14 +80,34 @@ public class WardenDashboardActivity extends AppCompatActivity {
                                 .setOnClickListener(v -> startActivity(new Intent(this, WardenRulesActivity.class)));
                 findViewById(R.id.tileFees).setOnClickListener(v -> Toast.makeText(this,
                                 "Fees Management — assign fees per student in Firestore", Toast.LENGTH_LONG).show());
-                findViewById(R.id.tileMessMenu).setOnClickListener(v -> Toast.makeText(this,
-                                "Mess Menu — update mess_menu collection in Firestore", Toast.LENGTH_LONG).show());
+                findViewById(R.id.tileMessMenu)
+                                .setOnClickListener(v -> startActivity(new Intent(this, WardenMessMenuActivity.class)));
+                findViewById(R.id.tileChatbot)
+                                .setOnClickListener(v -> startActivity(
+                                                new Intent(this, com.example.dormmate.ui.ChatbotActivity.class)));
+                findViewById(R.id.tileMessPredict)
+                                .setOnClickListener(v -> showMessPredictionDialog());
+                findViewById(R.id.tileMessages)
+                                .setOnClickListener(v -> startActivity(
+                                                new Intent(this, com.example.dormmate.ui.ChatListActivity.class)));
 
                 // Card navigation (Stats cards)
                 findViewById(R.id.cardOccupancy)
                                 .setOnClickListener(v -> startActivity(new Intent(this, StudentListActivity.class)));
                 findViewById(R.id.cardLeaves)
                                 .setOnClickListener(v -> startActivity(new Intent(this, WardenLeaveActivity.class)));
+        }
+
+        private void showMessPredictionDialog() {
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+                builder.setTitle("Mess Demand Prediction (ML)");
+                builder.setMessage("This is mock data from our predictive model.\n\n" +
+                                "Total Students: 200\n" +
+                                "On Leave: 30\n" +
+                                "Predicted Dinner: 170\n\n" +
+                                "(Backend ML integration pending)");
+                builder.setPositiveButton("OK", null);
+                builder.show();
         }
 
         private void loadWardenName() {

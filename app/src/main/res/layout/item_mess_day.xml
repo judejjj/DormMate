@@ -25,7 +25,12 @@
     <TextView android:id="@+id/tvDinner"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
         android:text="🌙 Dinner: Roti, Paneer, Rice" android:textColor="#CCFFFFFF"
-        android:textSize="13sp" android:layout_marginBottom="12dp"/>
+        android:textSize="13sp" android:layout_marginBottom="4dp"/>
+
+    <TextView android:id="@+id/tvSpecial"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="✨ Special: Ice Cream" android:textColor="#FFE082"
+        android:textSize="14sp" android:textStyle="italic" android:layout_marginBottom="12dp"/>
 
     <RatingBar android:id="@+id/ratingBar"
         android:layout_width="wrap_content"

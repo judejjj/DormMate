@@ -33,6 +33,8 @@ public class VisitorLogActivity extends AppCompatActivity {
 
         findViewById(R.id.tvVisitorBack).setOnClickListener(v -> finish());
         findViewById(R.id.btnRegisterVisitor).setOnClickListener(v -> registerVisitor());
+        findViewById(R.id.btnCaptureFace).setOnClickListener(
+                v -> Toast.makeText(this, "Face capture module pending", Toast.LENGTH_SHORT).show());
 
         adapter = new VisitorAdapter();
         rvVisitors.setAdapter(adapter);
@@ -113,6 +115,13 @@ public class VisitorLogActivity extends AppCompatActivity {
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm, dd MMM", Locale.getDefault());
                 holder.tvTime.setText(sdf.format(ts.toDate()));
             }
+
+            // Mock an Overstay Alert for the first item in the list as a demo
+            if (position == 0) {
+                holder.tvOverstayAlert.setVisibility(View.VISIBLE);
+            } else {
+                holder.tvOverstayAlert.setVisibility(View.GONE);
+            }
         }
 
         @Override
@@ -121,7 +130,7 @@ public class VisitorLogActivity extends AppCompatActivity {
         }
 
         class VH extends RecyclerView.ViewHolder {
-            TextView tvName, tvPhone, tvVisiting, tvTime;
+            TextView tvName, tvPhone, tvVisiting, tvTime, tvOverstayAlert;
 
             VH(@NonNull View view) {
                 super(view);
@@ -129,6 +138,7 @@ public class VisitorLogActivity extends AppCompatActivity {
                 tvPhone = view.findViewById(R.id.tvVisitorPhone);
                 tvVisiting = view.findViewById(R.id.tvVisitingStudent);
                 tvTime = view.findViewById(R.id.tvVisitTime);
+                tvOverstayAlert = view.findViewById(R.id.tvOverstayAlert);
             }
         }
     }

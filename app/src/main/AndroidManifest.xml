@@ -34,12 +34,41 @@
             android:name=".ui.student.StudentDashboardActivity"
             android:exported="false"
             android:label="Student Dashboard" />
+            
+        <activity
+            android:name=".ui.ChatbotActivity"
+            android:exported="false"
+            android:label="DormMate AI Assistant" />
+            
+        <activity
+            android:name=".ui.student.AiRoomFinderActivity"
+            android:exported="false"
+            android:label="AI Room Finder" />
+
+        <activity
+            android:name=".ui.student.FaceScanPlaceholderActivity"
+            android:exported="false"
+            android:label="Face Scan" />
+
+        <activity
+            android:name=".ui.ChatListActivity"
+            android:exported="false"
+            android:label="Messages" />
+
+        <activity
+            android:name=".ui.ChatRoomActivity"
+            android:exported="false"
+            android:label="Chat Room" />
 
         <!-- Warden Module -->
         <activity
             android:name=".ui.warden.WardenDashboardActivity"
             android:exported="false"
             android:label="Warden Dashboard" />
+        <activity
+            android:name=".ui.warden.WardenMessMenuActivity"
+            android:exported="false"
+            android:label="Mess Menu" />
         <activity
             android:name=".ui.warden.StudentListActivity"
             android:exported="false"

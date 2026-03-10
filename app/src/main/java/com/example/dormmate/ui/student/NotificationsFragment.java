@@ -52,27 +52,74 @@ public class NotificationsFragment extends Fragment {
             return;
         String uid = auth.getCurrentUser().getUid();
 
-        // Correct path: users/{uid}/notifications (subcollection)
-        notifListener = db.collection("users").document(uid)
-                .collection("notifications")
-                .orderBy("leave", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                .addSnapshotListener((snapshots, e) -> {
-                    if (e != null || snapshots == null)
-                        return;
+        // 1. Fetch user's floor property first
+        db.collection("users").document(uid).get()
+                .addOnSuccessListener(
+                        new com.google.android.gms.tasks.OnSuccessListener<com.google.firebase.firestore.DocumentSnapshot>() {
+                            @Override
+                            public void onSuccess(com.google.firebase.firestore.DocumentSnapshot userDoc) {
+                                String floor = userDoc.getString("floor");
+                                String targetFloor = floor != null && !floor.trim().isEmpty() ? "floor_" + floor.trim()
+                                        : "unknown_floor";
 
-                    // Each document may have dynamic field names as titles
-                    List<NotifItem> items = new ArrayList<>();
-                    for (QueryDocumentSnapshot doc : snapshots) {
-                        Map<String, Object> data = doc.getData();
-                        for (Map.Entry<String, Object> entry : data.entrySet()) {
-                            String key = entry.getKey();
-                            // Skip Timestamp fields (they're metadata, not notifications)
-                            if (entry.getValue() instanceof com.google.firebase.Timestamp)
-                                continue;
-                            items.add(new NotifItem(key, String.valueOf(entry.getValue())));
-                        }
+                                // 2. Attach listener to global announcements filtering by 'all' or specific
+                                // floor target
+                                notifListener = db.collection("global_announcements")
+                                        .whereIn("target", java.util.Arrays.asList("all", targetFloor))
+                                        .addSnapshotListener(
+                                                new com.google.firebase.firestore.EventListener<com.google.firebase.firestore.QuerySnapshot>() {
+                                                    @Override
+                                                    public void onEvent(
+                                                            @androidx.annotation.Nullable com.google.firebase.firestore.QuerySnapshot snapshots,
+                                                            @androidx.annotation.Nullable com.google.firebase.firestore.FirebaseFirestoreException e) {
+                                                        if (e != null || snapshots == null)
+                                                            return;
+
+                                                        List<NotifItem> items = new ArrayList<>();
+                                                        for (QueryDocumentSnapshot doc : snapshots) {
+                                                            String title = doc.getString("title");
+                                                            String message = doc.getString("message");
+                                                            com.google.firebase.Timestamp ts = doc
+                                                                    .getTimestamp("timestamp");
+
+                                                            String timeStr = "";
+                                                            if (ts != null) {
+                                                                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(
+                                                                        "MMM dd, HH:mm", java.util.Locale.getDefault());
+                                                                timeStr = sdf.format(ts.toDate());
+                                                            }
+
+                                                            if (title != null && message != null) {
+                                                                items.add(new NotifItem(title, message, timeStr));
+                                                            }
+                                                        }
+
+                                                        // Sort locally since we used whereIn which prevents multi-field
+                                                        // orderBy complexity
+                                                        java.util.Collections.sort(items,
+                                                                new java.util.Comparator<NotifItem>() {
+                                                                    @Override
+                                                                    public int compare(NotifItem o1, NotifItem o2) {
+                                                                        return o2.time.compareTo(o1.time); // basic
+                                                                                                           // descending
+                                                                                                           // sort on
+                                                                                                           // string
+                                                                                                           // formatted
+                                                                                                           // time
+                                                                    }
+                                                                });
+
+                                                        rvNotifications.setAdapter(new NotifAdapter(items));
+                                                    }
+                                                });
+                            }
+                        })
+                .addOnFailureListener(new com.google.android.gms.tasks.OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        android.widget.Toast.makeText(getContext(), "Failed to verify user floor for notifications",
+                                android.widget.Toast.LENGTH_SHORT).show();
                     }
-                    rvNotifications.setAdapter(new NotifAdapter(items));
                 });
     }
 
@@ -83,13 +130,14 @@ public class NotificationsFragment extends Fragment {
             notifListener.remove();
     }
 
-    // Simple model: field key = title, field value = message
+    // Simple model: extracted standard fields
     static class NotifItem {
-        String title, message;
+        String title, message, time;
 
-        NotifItem(String title, String message) {
+        NotifItem(String title, String message, String time) {
             this.title = title;
             this.message = message;
+            this.time = time;
         }
     }
 
@@ -112,9 +160,9 @@ public class NotificationsFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             NotifItem item = items.get(position);
-            holder.tvTitle.setText(item.title); // e.g. "Leave Approved"
-            holder.tvMessage.setText(item.message); // e.g. "Your leave request..."
-            holder.tvTime.setText(""); // timestamp skipped (it's a Firestore Timestamp)
+            holder.tvTitle.setText(item.title);
+            holder.tvMessage.setText(item.message);
+            holder.tvTime.setText(item.time);
         }
 
         @Override

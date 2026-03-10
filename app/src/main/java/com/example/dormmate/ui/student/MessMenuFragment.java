@@ -70,10 +70,12 @@ public class MessMenuFragment extends Fragment {
         String[] days = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
         for (String day : days) {
             java.util.HashMap<String, Object> m = new java.util.HashMap<>();
-            m.put("day", day);
-            m.put("breakfast", "Poha, Tea/Coffee");
-            m.put("lunch", "Dal, Rice, Sabzi, Roti");
-            m.put("dinner", "Paneer/Egg, Rice, Roti, Salad");
+            m.put("Day", day);
+            m.put("Breakfast", "Poha, Tea/Coffee");
+            m.put("Lunch", "Dal, Rice, Sabzi, Roti");
+            m.put("Dinner", "Paneer/Egg, Rice, Roti, Salad");
+            if (day.equals("Sunday"))
+                m.put("Special", "Ice Cream");
             list.add(m);
         }
         return list;
@@ -102,11 +104,23 @@ public class MessMenuFragment extends Fragment {
             holder.tvBreakfast.setText("🌅 Breakfast: " + getField(item, "Breakfast", "breakfast", "—"));
             holder.tvLunch.setText("☀️ Lunch: " + getField(item, "Lunch", "lunch", "—"));
             holder.tvDinner.setText("🌙 Dinner: " + getField(item, "Dinner", "dinner", "—"));
-            holder.ratingBar.setOnRatingBarChangeListener((bar, rating, fromUser) -> {
-                if (fromUser) {
-                    Toast.makeText(bar.getContext(),
-                            "Rated " + (int) rating + "★ for " + item.get("day"),
-                            Toast.LENGTH_SHORT).show();
+
+            String special = getField(item, "Special", "special", "");
+            if (!special.isEmpty() && !special.equals("—")) {
+                holder.tvSpecial.setVisibility(View.VISIBLE);
+                holder.tvSpecial.setText("✨ Special: " + special);
+            } else {
+                holder.tvSpecial.setVisibility(View.GONE);
+            }
+
+            holder.ratingBar.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                @Override
+                public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+                    if (fromUser) {
+                        Toast.makeText(ratingBar.getContext(),
+                                "Rated " + (int) rating + "★ for " + item.get("Day"),
+                                Toast.LENGTH_SHORT).show();
+                    }
                 }
             });
         }
@@ -127,7 +141,7 @@ public class MessMenuFragment extends Fragment {
         }
 
         static class ViewHolder extends RecyclerView.ViewHolder {
-            TextView tvDay, tvBreakfast, tvLunch, tvDinner;
+            TextView tvDay, tvBreakfast, tvLunch, tvDinner, tvSpecial;
             RatingBar ratingBar;
 
             ViewHolder(@NonNull View view) {
@@ -136,6 +150,7 @@ public class MessMenuFragment extends Fragment {
                 tvBreakfast = view.findViewById(R.id.tvBreakfast);
                 tvLunch = view.findViewById(R.id.tvLunch);
                 tvDinner = view.findViewById(R.id.tvDinner);
+                tvSpecial = view.findViewById(R.id.tvSpecial);
                 ratingBar = view.findViewById(R.id.ratingBar);
             }
         }

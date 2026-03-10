@@ -40,8 +40,7 @@ public class FeesFragment extends Fragment {
         tvTotalFee = view.findViewById(R.id.tvTotalFee);
 
         view.findViewById(R.id.tvFeesBack).setOnClickListener(v -> requireActivity().onBackPressed());
-        view.findViewById(R.id.btnPayFees).setOnClickListener(v -> Toast
-                .makeText(getContext(), "Online payment integration coming soon!", Toast.LENGTH_SHORT).show());
+        view.findViewById(R.id.btnPayFees).setOnClickListener(v -> showPaymentDialog());
 
         // Set fee row labels
         setFeeRowLabel(view, R.id.rowRoomFee, "Room Rent");
@@ -50,6 +49,23 @@ public class FeesFragment extends Fragment {
         setFeeRowLabel(view, R.id.rowOther, "Other Charges");
 
         loadFees(view);
+    }
+
+    private void showPaymentDialog() {
+        if (getContext() == null)
+            return;
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(getContext())
+                .setTitle("Secure Payment")
+                .setMessage("Initializing secure payment gateway...\nPlease wait.")
+                .setCancelable(false)
+                .show();
+
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            if (dialog.isShowing()) {
+                dialog.dismiss();
+                Toast.makeText(getContext(), "Payment Successful! (Mock)", Toast.LENGTH_LONG).show();
+            }
+        }, 2000);
     }
 
     private void setFeeRowLabel(View root, int rowId, String label) {
