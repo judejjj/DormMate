@@ -23,19 +23,23 @@ public class HostelContextBuilder {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Tasks for Global Data
-        Task<DocumentSnapshot> rulesTask = db.collection("system").document("hostel_rules").get();
-        // Assuming mess menu is stored with document id as 'today' or we fetch the
-        // latest
-        Task<QuerySnapshot> messTask = db.collection("mess_menu").limit(1).get();
-        Task<QuerySnapshot> broadcastTask = db.collection("global_announcements")
-                .orderBy("timestamp", Query.Direction.DESCENDING).limit(1).get();
+        Task<DocumentSnapshot> rulesTask = db.collection("hostel_rules").document("rules").get();
+        // Get today's day string (e.g. "Monday")
+        java.util.Calendar calendar = java.util.Calendar.getInstance();
+        java.util.Date date = calendar.getTime();
+        String dayOfWeek = new java.text.SimpleDateFormat("EEEE", java.util.Locale.ENGLISH).format(date.getTime());
+
+        // Fetch the entire week's menu so AI can answer about any day
+        Task<QuerySnapshot> messTask = db.collection("mess_menu").get();
+        // Fetch recent announcements and sort locally to avoid composite index
+        // requirement
+        Task<QuerySnapshot> broadcastTask = db.collection("global_announcements").get();
 
         // Tasks for Personalized Data
         Task<DocumentSnapshot> profileTask = db.collection("users").document(currentUserId).get();
         Task<DocumentSnapshot> feesTask = db.collection("fees").document(currentUserId).get();
         Task<QuerySnapshot> leavesTask = db.collection("leave_requests")
                 .whereEqualTo("userId", currentUserId)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
                 .limit(1)
                 .get();
 
@@ -46,7 +50,9 @@ public class HostelContextBuilder {
         allTasks.addOnSuccessListener(results -> {
             try {
                 StringBuilder contextBuilder = new StringBuilder();
-                contextBuilder.append("--- HOSTEL OMNI-CONTEXT ---\n\n");
+                contextBuilder.append("--- HOSTEL OMNI-CONTEXT ---\n");
+                contextBuilder.append("Today's Date: ").append(date.toString()).append("\n");
+                contextBuilder.append("Current Day: ").append(dayOfWeek).append("\n\n");
 
                 // Process Profile
                 DocumentSnapshot profileDoc = (DocumentSnapshot) results.get(3);
@@ -54,8 +60,8 @@ public class HostelContextBuilder {
                     contextBuilder.append("[User Profile]\n");
                     contextBuilder.append("Name: ").append(profileDoc.getString("name")).append("\n");
                     contextBuilder.append("Room: ").append(profileDoc.getString("room")).append("\n");
-                    contextBuilder.append("Floor: ").append(profileDoc.getLong("floor")).append("\n");
-                    contextBuilder.append("Wing: ").append(profileDoc.getLong("wing")).append("\n\n");
+                    contextBuilder.append("Floor: ").append(profileDoc.getString("floor")).append("\n");
+                    contextBuilder.append("Wing: ").append(profileDoc.getString("wing")).append("\n\n");
                 }
 
                 // Process Fees
@@ -87,22 +93,52 @@ public class HostelContextBuilder {
                     contextBuilder.append("[Hostel Rules]\n").append(rulesDoc.getString("content")).append("\n\n");
                 }
 
-                // Process Mess Menu
+                // Process Mess Menu (Show multiple days if available)
                 QuerySnapshot messSnap = (QuerySnapshot) results.get(1);
                 if (!messSnap.isEmpty()) {
-                    DocumentSnapshot messDoc = messSnap.getDocuments().get(0);
-                    contextBuilder.append("[Today's Mess Menu]\n");
-                    contextBuilder.append("Breakfast: ").append(messDoc.getString("breakfast")).append("\n");
-                    contextBuilder.append("Lunch: ").append(messDoc.getString("lunch")).append("\n");
-                    contextBuilder.append("Dinner: ").append(messDoc.getString("dinner")).append("\n\n");
+                    contextBuilder.append("[Mess Menu Schedule]\n");
+                    for (DocumentSnapshot messDoc : messSnap.getDocuments()) {
+                        String dayLabel = messDoc.getString("Day");
+                        if (dayLabel == null)
+                            dayLabel = "Unknown Day";
+
+                        contextBuilder.append("Day: ").append(dayLabel).append("\n");
+                        contextBuilder.append(" - Breakfast: ")
+                                .append(messDoc.getString("Breakfast") != null ? messDoc.getString("Breakfast")
+                                        : messDoc.getString("breakfast"))
+                                .append("\n");
+                        contextBuilder.append(" - Lunch: ")
+                                .append(messDoc.getString("Lunch") != null ? messDoc.getString("Lunch")
+                                        : messDoc.getString("lunch"))
+                                .append("\n");
+                        contextBuilder.append(" - Dinner: ")
+                                .append(messDoc.getString("Dinner") != null ? messDoc.getString("Dinner")
+                                        : messDoc.getString("dinner"))
+                                .append("\n\n");
+                    }
                 }
 
-                // Process Broadcast
+                // Process Broadcast (Find latest locally)
                 QuerySnapshot broadcastSnap = (QuerySnapshot) results.get(2);
                 if (!broadcastSnap.isEmpty()) {
-                    DocumentSnapshot broadcastDoc = broadcastSnap.getDocuments().get(0);
-                    contextBuilder.append("[Latest Broadcast]\n");
-                    contextBuilder.append(broadcastDoc.getString("message")).append("\n\n");
+                    DocumentSnapshot latestBroadcast = null;
+                    for (DocumentSnapshot doc : broadcastSnap.getDocuments()) {
+                        if (latestBroadcast == null) {
+                            latestBroadcast = doc;
+                        } else {
+                            if (doc.getTimestamp("timestamp") != null
+                                    && latestBroadcast.getTimestamp("timestamp") != null) {
+                                if (doc.getTimestamp("timestamp")
+                                        .compareTo(latestBroadcast.getTimestamp("timestamp")) > 0) {
+                                    latestBroadcast = doc;
+                                }
+                            }
+                        }
+                    }
+                    if (latestBroadcast != null) {
+                        contextBuilder.append("[Latest Broadcast]\n");
+                        contextBuilder.append(latestBroadcast.getString("message")).append("\n\n");
+                    }
                 }
 
                 listener.onContextBuilt(contextBuilder.toString());

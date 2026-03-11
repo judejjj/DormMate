@@ -32,14 +32,14 @@ public class ChatbotManager {
                 .addText(systemInstructionText)
                 .build();
         GenerativeModel gm = new GenerativeModel(
-                "gemini-3.1-flash", // 2026 Flagship: High reasoning & context
-                apiKey,                    // Your BuildConfig.apiKey
-                null,                      // generationConfig (optional)
-                null,                      // safetySettings (optional)
-                null,                      // requestOptions (optional)
-                null,                      // tools (optional)
-                null,                      // toolConfig (optional)
-                systemInstruction          // The 'Omni-Context' string as a Content object
+                "gemini-2.5-flash", // 2026 Flagship: High reasoning & context
+                apiKey, // Your BuildConfig.apiKey
+                null, // generationConfig (optional)
+                null, // safetySettings (optional)
+                new com.google.ai.client.generativeai.type.RequestOptions(), // requestOptions MUST NOT be null
+                null, // tools (optional)
+                null, // toolConfig (optional)
+                systemInstruction // The 'Omni-Context' string as a Content object
         );
 
         GenerativeModelFutures modelFutures = GenerativeModelFutures.from(gm);
